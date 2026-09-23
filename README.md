@@ -2,7 +2,7 @@
 
 The **prediction step** of the timsim v2 pipeline: three small CLI jobs that turn peptide/precursor
 parquet tables into predicted-property parquet tables, using the
-[`pepdl`](https://github.com/theGreatHerrLebert/pepdl) deep predictors.
+[`pepdl`](https://github.com/MS-Simulation/pepdl) deep predictors.
 
 Everything else in timsim v2 is Rust; these three are Python because the properties come from trained
 models and re-implementing inference in Rust buys nothing.
