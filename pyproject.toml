@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 # scipy: rt.py draws the elution-peak shape parameters with scipy.stats.beta. It arrives
 # transitively via pepdl today, but this package uses it directly, so it is declared directly.
-dependencies = ["pepdl @ git+https://github.com/MS-Simulation/pepdl.git", "numpy>=1.21", "pandas>=1.3", "pyarrow>=13", "scipy>=1.7"]
+dependencies = ["pepdl @ git+https://github.com/MS-Simulation/pepdl.git@75420c5cbc878130ea7034a1b6e32eb23a73fc25", "numpy>=1.21", "pandas>=1.3", "pyarrow>=13", "scipy>=1.7"]
 
 [project.optional-dependencies]
 local = ["pepdl[local]"]
