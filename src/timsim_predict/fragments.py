@@ -122,6 +122,13 @@ def _predict_tensors_koina(sequences, charges, collision_energies, name: str):
     return pred
 
 
+#: The instrument the local model is told it is predicting for. The local model is the timsTOF
+#: model (fine-tuned on timsTOF spectra labelled "timstof"); without an instrument it falls back to
+#: "unknown". On held-out measured timsTOF spectra: median spectral angle 0.834 unknown, 0.857
+#: timstof (pepdl#3). Recorded in the artifact as ``timsim.fragments.instrument``.
+LOCAL_INSTRUMENT = "timstof"
+
+
 @lru_cache(maxsize=1)
 def _local_predictor():
     """The local intensity predictor, constructed ONCE.
@@ -130,7 +137,7 @@ def _local_predictor():
     doing that per slice would trade the memory blow-up for a runtime one.
     """
     from pepdl.intensity.predictors import DeepPeptideIntensityPredictor
-    return DeepPeptideIntensityPredictor()
+    return DeepPeptideIntensityPredictor(instrument=LOCAL_INSTRUMENT)
 
 
 def predict_tensors(sequences, charges, collision_energies, model: Optional[str] = None):
@@ -168,6 +175,8 @@ def fragment_schema(prov: str, collision_energy: float, ce_source: Optional[str]
         "timsim.fragments.model": prov,
         "timsim.fragments.collision_energy": repr(float(collision_energy)),
     }
+    if not prov.startswith("koina:"):  # a Koina model has no instrument input
+        meta["timsim.fragments.instrument"] = LOCAL_INSTRUMENT
     if ce_source is not None:
         meta["timsim.fragments.collision_energy"] = "per-precursor"
         meta["timsim.fragments.collision_energy_source"] = ce_source
