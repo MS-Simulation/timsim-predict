@@ -119,6 +119,10 @@ def predict_rt_index(
 
 
 def main(argv=None) -> int:
+    from timsim_predict import _identity
+
+    if _identity.handle(argv, "timsim-rt"):  # what the flow fingerprints; see _identity
+        return 0
     ap = argparse.ArgumentParser(
         prog="timsim-rt",
         description="peptides -> retention-time index (structure; deep model, Chronologer by default)",
