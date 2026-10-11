@@ -93,3 +93,32 @@ def test_schema_metadata_records_which_ce_model_produced_the_library():
     per = fragment_schema("prospect-local", 25.0, ce_source="ce.parquet").metadata
     assert per[b"timsim.fragments.collision_energy"] == b"per-precursor"
     assert per[b"timsim.fragments.collision_energy_source"] == b"ce.parquet"
+
+
+def test_local_model_records_its_instrument_and_koina_does_not():
+    from timsim_predict.fragments import LOCAL_INSTRUMENT
+
+    assert fragment_schema("prospect-local", 25.0).metadata[b"timsim.fragments.instrument"] == \
+        LOCAL_INSTRUMENT.encode()
+    koina = fragment_schema("koina:Prosit_2020_intensity_HCD", 25.0).metadata
+    assert b"timsim.fragments.instrument" not in koina
+
+
+def test_the_local_predictor_is_built_for_timstof(monkeypatch):
+    """The instrument must reach pepdl: without it the model predicts for "unknown"."""
+    import pepdl.intensity.predictors as ip
+    from timsim_predict import fragments
+
+    seen = {}
+
+    class Fake:
+        def __init__(self, **kw):
+            seen.update(kw)
+
+    monkeypatch.setattr(ip, "DeepPeptideIntensityPredictor", Fake)
+    fragments._local_predictor.cache_clear()
+    try:
+        fragments._local_predictor()
+    finally:
+        fragments._local_predictor.cache_clear()
+    assert seen == {"instrument": "timstof"}
