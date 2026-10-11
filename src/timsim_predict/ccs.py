@@ -112,6 +112,10 @@ def predict_ccs(
 
 
 def main(argv=None) -> int:
+    from timsim_predict import _identity
+
+    if _identity.handle(argv, "timsim-ccs"):  # what the flow fingerprints; see _identity
+        return 0
     ap = argparse.ArgumentParser(
         prog="timsim-ccs",
         description="precursors -> collision cross section (structure; deep model)",

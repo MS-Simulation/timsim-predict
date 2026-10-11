@@ -358,6 +358,10 @@ def predict_fragments(
 
 
 def main(argv=None) -> int:
+    from timsim_predict import _identity
+
+    if _identity.handle(argv, "timsim-fragments"):  # what the flow fingerprints; see _identity
+        return 0
     ap = argparse.ArgumentParser(
         prog="timsim-fragments",
         description="precursors -> predicted fragment intensities (measurement; spectral library)",
