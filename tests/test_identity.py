@@ -14,7 +14,7 @@ from timsim_predict import _identity
 def _with_fake_packages(monkeypatch, tmp_path):
     """Point every package at a private copy of a tiny tree, returning those roots."""
     roots = {}
-    for name in _identity.PACKAGES:
+    for name in _identity.PACKAGES + _identity.OPTIONAL:
         root = tmp_path / name
         (root / "sub").mkdir(parents=True)
         (root / "__init__.py").write_text("x = 1\n")
@@ -36,7 +36,7 @@ def test_identity_is_deterministic_and_json(capsys):
     assert capsys.readouterr().out == first
     got = json.loads(first)
     assert got["schema"] == _identity.SCHEMA and got["tool"] == "timsim-ccs"
-    assert set(got["packages"]) == set(_identity.PACKAGES)
+    assert set(got["packages"]) == set(_identity.PACKAGES + _identity.OPTIONAL)
     assert "ccs/best_model.pt" in got["models"]["sha256"]
 
 
@@ -45,7 +45,7 @@ def test_no_flag_means_no_output(capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize("package", _identity.PACKAGES)
+@pytest.mark.parametrize("package", _identity.PACKAGES + _identity.OPTIONAL)
 def test_a_one_byte_change_in_any_package_changes_the_identity(monkeypatch, tmp_path, package):
     roots = _with_fake_packages(monkeypatch, tmp_path)
     before = _identity.identity("timsim-ccs")
@@ -106,3 +106,13 @@ def test_each_cli_answers_identity_without_its_required_args(capsys, module, too
     main = importlib.import_module(f"timsim_predict.{module}").main
     assert main(["--identity"]) == 0
     assert json.loads(capsys.readouterr().out)["tool"] == tool
+
+
+def test_an_absent_optional_package_is_recorded_and_installing_it_changes_the_identity(
+        monkeypatch, tmp_path):
+    roots = _with_fake_packages(monkeypatch, tmp_path)
+    monkeypatch.setattr(_identity, "_package_dir", lambda n: None if n == "chronologer" else roots[n])
+    without = _identity.identity("timsim-rt")
+    assert without["packages"]["chronologer"] is None
+    monkeypatch.setattr(_identity, "_package_dir", lambda n: roots[n])
+    assert _identity.identity("timsim-rt") != without

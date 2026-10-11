@@ -15,7 +15,9 @@ that answer instead of the launcher.
 # What is covered
 
 * each package's version and a sha256 over every file in its installed directory (catches editable
-  installs and wrapper-only changes; a bundled checkpoint inside pepdl is covered too);
+  installs and wrapper-only changes; a bundled checkpoint inside pepdl is covered too). Required:
+  timsim_predict, pepdl, mscorepy. Optional, when installed: chronologer (the default RT model's
+  code) and koinapy (a Koina model's output also depends on its server, which no hash can cover);
 * torch's version (numerics), read from metadata without importing torch;
 * the model registry: pepdl's ``MODEL_VERSION`` and the pinned sha256 of every downloadable
   checkpoint. ``ensure_model`` verifies a download against that sha256, so the registry entry is
@@ -39,6 +41,10 @@ from typing import Optional
 
 SCHEMA = 1
 PACKAGES = ("timsim_predict", "pepdl", "mscorepy")
+# Code a selectable model runs that lives outside pepdl: Chronologer (the default RT model's
+# network, tensorisation and vocabulary) and the Koina client. Hashed when installed, recorded as
+# absent otherwise (installs without the local / koina extras).
+OPTIONAL = ("chronologer", "koinapy")
 
 
 def _package_dir(name: str) -> Optional[Path]:
@@ -91,6 +97,10 @@ def identity(tool: str) -> dict:
         if d is None:
             raise RuntimeError(f"{tool} --identity: package {name!r} is not importable")
         packages[name] = {"version": _version(name.replace("_", "-")), "files_sha256": _tree_sha256(d)}
+    for name in OPTIONAL:
+        d = _package_dir(name)
+        packages[name] = None if d is None else {
+            "version": _version(name), "files_sha256": _tree_sha256(d)}
     pepdl_dir = _package_dir("pepdl")
     # The intensity loader also looks for weights in a repo-root ``checkpoints/`` (two levels above
     # the package; it exists only in a source checkout), which the package tree does not include.
